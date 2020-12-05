@@ -3,6 +3,7 @@ import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
 import Button from 'react-bootstrap/Button'
 import {getFromStorage} from '../utils/storage'
+import GoogleBtn from './GoogleBtn'
 
 export default class FullNavbar extends Component {
 
@@ -58,7 +59,7 @@ export default class FullNavbar extends Component {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="ml-auto">
-            {button_combination}
+            <GoogleBtn/>
             </Nav>
         </Navbar.Collapse>
         </Navbar>
