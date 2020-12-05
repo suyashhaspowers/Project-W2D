@@ -1,96 +1,15 @@
 const { renderSync } = require('node-sass');
 const User = require('../../models/User');
 const UserSession = require('../../models/UserSession');
-var validator = require("email-validator");
-
 
 module.exports = (app) => {
-    // Sign up API
-    app.post('/api/account/signup', (req, res, next) => {
-        const { body } = req;
-        const {
-            firstName,
-            lastName,
-            email,
-            password
-        } = body;
-
-        if (!firstName) {
-            return res.send({
-                success: false,
-                message: 'Error: First name cannot be blank.'
-            });
-        }
-        if (!lastName) {
-            return res.send({
-                success: false,
-                message: 'Error: Last name cannot be blank.'
-            });
-        }
-        if (!email) {
-            return res.send({
-                success: false,
-                message: 'Error: Email cannot be blank.'
-            });
-        }
-        if (!password) {
-            return res.send({
-                success: false,
-                message: 'Error: Password cannot be blank.'
-            });
-        }
-        let lower_email = email.toLowerCase();
-
-        // Step 1. Verify email doesn't exost
-
-        User.find({
-            email: lower_email
-        }, (err, previousUsers) => {
-            if (err) {
-                return res.send({
-                    success: false,
-                    message: 'Error: Server error. Cannot find any user.'
-                });
-            } else if (previousUsers.length > 0) {
-                return res.send({
-                    success: false,
-                    message: 'Error: A user with this email already exists.'
-                });
-            }
-            // Step 2. Validate Email
-            if (!validator.validate(email)) {
-                return res.send({
-                    success: false,
-                    message: 'Error: Invalid email address'
-                });
-            }
-
-            // Step 3. Save
-            const newUser = new User();
-            newUser.firstName = firstName;
-            newUser.lastName = lastName;
-            newUser.email = lower_email;
-            newUser.password = newUser.generateHash(password);
-            newUser.save((err, user) => {
-                if (err) {
-                    return res.send({
-                        success: false,
-                        message: 'Error: Could not create account.'
-                    });
-                }
-                return res.send({
-                    success: true,
-                    message: 'Sign up succesful.'
-                });
-            });
-        });
-    });
-
-    // Sign In API
+    // Sign In / Sign-Up API
     app.post('/api/account/signin', (req, res, next) => {
         const { body } = req;
-        const { password } = body;
+        const { googleId } = body;
         let { email } = body;
+
+        console.log(body);
 
         if (!email) {
             return res.send({
@@ -98,61 +17,72 @@ module.exports = (app) => {
                 message: 'Error: Email cannot be blank.'
             });
         }
-        if (!password) {
+        if (!googleId) {
             return res.send({
                 success: false,
-                message: 'Error: Password cannot be blank.'
+                message: 'Error: Google ID cannot be blank.'
             });
         }
         email = email.toLowerCase();
 
         // Step 1. Check to see that user exists w/ same email
+        // If they do, create session
+        // If they do not, crete user and then create session
+
+        let userId = null;
+        let initMessage = "";
 
         User.find({
-            email: email
-        }, (err, users) => {
+            email: email,
+            googleId: googleId,
+        }, async (err, users) => {
             if (err) {
                 return res.send({
                     success: false,
-                    message: 'Error: Server error. Cannot find user.'
+                    message: 'Error: Server error. Cannot find user. ' + err,
                 });
             } else if (users.length === 0) {
-                return res.send({
-                    sucess: false,
-                    message: 'Error: A user under this email does not exist.'
-                });
+                // Create user instance
+                // Step 2. Save
+                const newUser = new User();
+                newUser.email = email;
+                newUser.googleId = googleId;
+                try {
+                    const user = await newUser.save()
+                    userId = user._id;
+                    initMessage = "Sign Up Successful. ";
+                } catch (err) {
+                    return res.send({
+                        success: false,
+                        message: 'Error: Could not create account. ' + err,
+                    });
+                }
             } else if (users.length > 1) {
                 return res.send({
                     success: false,
                     message: 'Error: Duplicate accounts exist under this email.'
                 });
-            }
+            } 
 
-            const user = users[0]; 
-
-            // Step 2. Validate password entry in the form
-
-            if (!user.validPassword(password)) {
-                return res.send({
-                    success: false,
-                    message: 'Error: Invalid password.'
-                });
+            if (userId === null) {
+                const user = users[0];
+                userId = user._id;
             }
 
             // Step 3. Create User Session
             let userSession = new UserSession();
-            userSession.userId = user._id;
+            userSession.userId = userId;
             userSession.save((err, doc) => {
                 if (err) {
                     return res.send({
                         success: false,
-                        message: 'Error: Server error. Unable to sign-in.'
+                        message: 'Error: Server error. Unable to sign-in.' + err,
                     });
                 }
 
                 return res.send({
                     success: true,
-                    message: 'Valid sign in!',
+                    message: initMessage + 'Valid sign in!',
                     token: doc._id,
                 });
             });
