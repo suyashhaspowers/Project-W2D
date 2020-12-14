@@ -115,9 +115,18 @@ module.exports = (app) => {
                     message: 'Error: Invalid token verification.'
                 });
             } else {
-                return res.send({
-                    success: true,
-                    message: 'Token verified.'
+                User.findById(sessions[0].userId, (err, user) => {
+                    if (err) {
+                        return res.send({
+                            success: false,
+                            message: 'Unable to find user for this token. ' + err
+                        });
+                    }
+                    return res.send({
+                        success: true,
+                        message: 'Token verified.',
+                        user: user,
+                    });
                 });
             }
         })

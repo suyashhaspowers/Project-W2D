@@ -33,28 +33,10 @@ export default class FullNavbar extends Component {
   render() {
     const { loggedIn } = this.state;
 
-    let button_combination;
-
-    if (loggedIn) {
-        button_combination = (
-            <div>
-                <Button variant="primary">Get Started</Button>{'   '}
-                <Button variant="danger">Log Out</Button>
-            </div>
-        );
-    } else {
-        button_combination = (
-            <div>
-                <Button variant="success">Login</Button>{'   '}
-                <Button variant="info">Sign Up</Button>
-            </div>
-        );
-    }
-
     return (
         <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
         <Nav className="mx-auto">
-            <Navbar.Brand href="#home">Project-W2D</Navbar.Brand>
+            <Navbar.Brand href="/">Project-W2D</Navbar.Brand>
         </Nav>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
