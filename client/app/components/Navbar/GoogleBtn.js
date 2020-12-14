@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { GoogleLogin, GoogleLogout } from 'react-google-login';
 import {getFromStorage, setInStorage, deleteFromStorage} from '../utils/storage'
+import { Redirect } from 'react-router-dom'
 
 const CLIENT_ID = '87191282385-3k22vem13mmsb2so2h941qm5r1i4kp8e.apps.googleusercontent.com';
 
@@ -12,6 +13,7 @@ class GoogleBtn extends Component {
     this.state = {
       isLoggedIn: false,
       token: '',
+      redirectHome: false,
     };
 
     this.login = this.login.bind(this);
@@ -81,6 +83,7 @@ class GoogleBtn extends Component {
     }
     this.setState(state => ({
         isLoggedIn: false,
+        redirectHome: true,
         token: '',
     }));
   }
@@ -95,6 +98,13 @@ class GoogleBtn extends Component {
 
   render() {
     console.log(this.state);
+
+    let redirect;
+
+    if (this.state.redirectHome) {
+      redirect = (<Redirect to='/' />);
+    }
+
     return (
     <div>
       { this.state.isLoggedIn ?
@@ -113,6 +123,7 @@ class GoogleBtn extends Component {
           responseType='code,token'
         />
       }
+      {redirect}
     </div>
     )
   }
